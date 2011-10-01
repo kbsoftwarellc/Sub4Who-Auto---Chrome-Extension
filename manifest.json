@@ -1,7 +1,8 @@
 {
-    "name": "Sub4Who Viewer",
-    "version": "0.2",
+    "name": "Sub4Who Auto-Earn",
+    "version": "0.3",
     "update_url": "http://sub4who.com/downloads/chrome/update.xml",
+    "options_page": "options.html",
     "icons": { "16": "icons/s4w-16.jpg",
                "32": "icons/s4w-32.jpg",
                "64": "icons/s4w-64.jpg",
@@ -9,7 +10,7 @@
     "description": "A chrome extension for the website Sub4Who.com. Exchange free YouTube views, subs, and more!",
     "background_page": "background.html",
     "browser_action": {
-        "default_title": "Sub4Who Viewer",
+        "default_title": "Sub4Who Auto-Earn",
         "default_icon": "icons/s4w-32.jpg"
     },
     "permissions": [
