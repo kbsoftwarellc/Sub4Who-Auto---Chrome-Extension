@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <script type="text/javascript" src="js/jquery-1.6.4.min.js"></script>
+        <script>
+        // Called when the user clicks on the browser action.
+        chrome.browserAction.onClicked.addListener(function(tab) {
+            $.getJSON('http://sub4who.com/auto/get_video?start=1', function(data) {
+               if(data.is_logged_in) {
+                   if(window.timer) clearTimeout(window.timer);
+                   
+                   if(window.tabId == null) { 
+                       chrome.tabs.create({url: "http://sub4who.com/", pinned: true, selected: true}, function(tab) {
+                           window.tabId = tab.id
+                           window.timer = setTimeout("get_video()", 1);
+                       });
+                   } else {
+                       chrome.tabs.update(window.tabId, {selected: true});
+                       window.timer = setTimeout("get_video()", 1);
+                   } 
+                   
+                   
+               } else {
+                    alert("You must login first!");
+                    chrome.tabs.create({url: "http://sub4who.com/login", pinned: true, selected: true}, function(tab) {
+                        window.tabId = tab.id
+                    });
+               }
+            })
+        });
+        
+        chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+            if(tabId == window.tabId) {
+                window.tabId = null;
+                clearTimeout(window.timer);
+            }
+        });
+        
+        function get_video() {
+            //No point to working if no window.
+            if (window.tabId == null) return;
+            
+            $.getJSON('http://sub4who.com/auto/get_video',
+                {
+                 
+                }, 
+                function(response) {
+                    if(window.tabId == null) { 
+                        chrome.tabs.create({url: 'about:blank', pinned: true, selected: true}, function(tab) {
+                            window.tabId = tab.id
+                        });
+                    }
+                
+                    if(response.is_logged_in) {
+                        if(response.video_url) {
+                            url = response.video_url;
+                        }
+                    } else {
+                        url = "http://sub4who.com/login";
+                    }
+                    
+                    if(url) {
+                        chrome.tabs.update(window.tabId, {url: url});
+                    }
+                }
+            ).complete(function() {
+                window.timer = setTimeout("get_video()", 30000);
+            })
+        }
+        </script>
+    </head>
+</html>
