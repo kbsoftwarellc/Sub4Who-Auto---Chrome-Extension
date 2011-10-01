@@ -4,8 +4,10 @@
         <link href="css/options.css" rel="stylesheet" type="text/css" />
     </head>
     
-    <body>
+    <body onLoad="restoreOptions();">
         <div id="content">
+            <div id="status"></div>
+            
             <table summary="Configure your login info." class="login_info">
                 <tbody>
                     <tr>
@@ -13,17 +15,45 @@
                     </tr>
                     <tr>
                         <td>Username: </td>
-                        <td><input type="text" value="" name="username" maxlength="45"></td>
+                        <td><input type="text" name="username" id="username" maxlength="45"></td>
                     </tr>
                     <tr>
                         <td>Password: </td>
-                        <td><input type="password" name="password" maxlength="45"></td>
+                        <td><input type="password" name="password" id="password" maxlength="45"></td>
                     </tr>
                     <tr>
-                        <td colspan="2" class="button"><input type="submit" vlaue="Save" name="login_info" /></td>
+                        <td colspan="2" class="button"><input onClick="saveOptions();" type="submit" vlaue="Save" name="login_info" /></td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
+        <script type="text/javascript">
+            function restoreOptions() {
+                var password = localStorage["password"];
+                var username = localStorage["username"];
+                
+                if (username)
+                    document.getElementById("username").value = username;
+                    
+                if (password)
+                    document.getElementById("password").value = password;
+            }
+            
+            function saveOptions() {
+                var username = document.getElementById("username").value;
+                var password = document.getElementById("password").value;
+                var status   = document.getElementById("status");
+                
+                localStorage["username"] = username;
+                localStorage["password"] = password;
+                
+                status.innerHTML = '<p align="center" class="color-green bold">Options Saved</p>';
+                
+                setTimeout(function() {
+                   status.innerHTML = ""; 
+                }, 3000);
+            }
+        </script>
     </body>
 </html>

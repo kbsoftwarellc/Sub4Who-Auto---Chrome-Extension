@@ -1,6 +1,14 @@
 #content {
-    width: 400px;
+    width: 280px;
     margin: auto;
+}
+
+p.color-green {
+    color: green;
+}
+
+p.bold {
+    font-weight: bold;
 }
 
 table.login_info {
