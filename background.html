@@ -95,8 +95,7 @@
             
             if (queue.length > 0) 
             {
-                video = queue[0];
-                queue.splice(0,1);
+                video = queue.shift();
                 localStorage["video_queue"] = JSON.stringify(queue);
                 
                 return video;
