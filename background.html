@@ -2,8 +2,8 @@
     <head>
         <script type="text/javascript" src="js/jquery-1.6.4.min.js"></script>
         <script type="text/javascript">
-        var video_queue = localStorage["video_queue"];
-        
+        window.last_url = null;
+                
         chrome.browserAction.onClicked.addListener(function(tab) {
             visit_url("about: blank");
             setTimer(1);
@@ -35,9 +35,9 @@
             }
         }
         
-        function setTimer(time) 
+        function setTimer(seconds) 
         {
-            var miliseconds = time * 1000;
+            var miliseconds = seconds * 1000;
             if(window.timer) clearTimeout(window.timer);
             window.timer = setTimeout("watch_video()", miliseconds);
         }
@@ -109,15 +109,44 @@
         function visit_url(url)
         {
             if(window.tabId == null) 
-            { 
+            {                
                 chrome.tabs.create({url: url, selected: true}, function(tab) {
                     window.tabId = tab.id
                 });
             } 
             else 
             {
-                chrome.tabs.update(window.tabId, {url: url, selected: true});
+                chrome.tabs.get(window.tabId, function(tabInfo) {
+                   if (tabInfo.url == window.last_url) return_video_info();
+                   window.last_url = url;
+                });
+                
+                chrome.tabs.update(window.tabId, {url: url, selected: true}, function(tabInfo) {
+                    window.last_url = url;
+                });
             }
+            
+            
+        }
+        
+        function return_video_info() 
+        {
+            return; //temporary until I finish return_video page
+            $.ajax({
+                url: 'http://subwho.com/auto/return_video',
+                dataType: 'json',
+                async: false,
+                success: function(response) {
+                    if (response.is_logged_in) 
+                    {
+                        if (response.videos) video_queue = response.videos;
+                    } 
+                    else 
+                    {
+                        s4wLogin();
+                    }
+                }
+            })
         }
         
         Object.size = function(obj) 
@@ -133,12 +162,12 @@
         {
             localStorage[key] = value;
             return true;
-        }
+        };
         
         Object.load = function(key)
         {
             return localStorage[key];
-        }
+        };
         </script>
     </head>
 </html>
