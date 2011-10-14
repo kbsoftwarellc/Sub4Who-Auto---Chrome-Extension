@@ -1,37 +1,45 @@
 <html>
     <head>
         <script type="text/javascript" src="js/jquery-1.6.4.min.js"></script>
-        <script>
-        // Called when the user clicks on the browser action.
+        <script type="text/javascript">
+        var video_queue = localStorage["video_queue"];
+        
         chrome.browserAction.onClicked.addListener(function(tab) {
-            $.getJSON('http://sub4who.com/auto/get_video?start=1', function(data) {
-               if(data.is_logged_in) {
-                   if(window.timer) clearTimeout(window.timer);
+            get_video_list();
+            return;
+            $.getJSON('http://subwho.com/auto/get_video?start=1', function(data) {
+                if(data.is_logged_in) {
+                    if(window.timer) clearTimeout(window.timer);
                    
-                   if(window.tabId == null) { 
-                       chrome.tabs.create({url: "http://sub4who.com/", pinned: true, selected: true}, function(tab) {
-                           window.tabId = tab.id
-                           window.timer = setTimeout("get_video()", 1);
-                       });
-                   } else {
-                       chrome.tabs.update(window.tabId, {selected: true});
-                       window.timer = setTimeout("get_video()", 1);
-                   } 
-                   
-                   
-               } else {
-                    alert("You must login first!");
-                    chrome.tabs.create({url: "http://sub4who.com/login", pinned: true, selected: true}, function(tab) {
-                        window.tabId = tab.id
-                    });
-               }
+                    if(window.tabId == null) { 
+                        chrome.tabs.create({url: "about:blank", selected: true}, function(tab) {
+                            window.tabId = tab.id
+                            setTimer(1);
+                        });
+                    } else {
+                        chrome.tabs.update(window.tabId, {selected: true});
+                        setTimer(1);
+                    } 
+                } else {
+                    s4wLogin();
+                    
+                    if(window.tabId == null) { 
+                        chrome.tabs.create({url: "about:blank", selected: true}, function(tab) {
+                            window.tabId = tab.id
+                            setTimer(5);
+                        });
+                    } else {
+                        chrome.tabs.update(window.tabId, {selected: true});
+                        setTimer(5);
+                    } 
+                }
             })
         });
         
         chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-            if(tabId == window.tabId) {
+            if (tabId == window.tabId) {
                 window.tabId = null;
-                clearTimeout(window.timer);
+                if(window.timer) clearTimeout(window.timer);
             }
         });
         
@@ -39,32 +47,79 @@
             //No point to working if no window.
             if (window.tabId == null) return;
             
-            $.getJSON('http://sub4who.com/auto/get_video',
+            $.getJSON('http://subwho.com/auto/get_video',
                 {
                  
                 }, 
                 function(response) {
                     if(window.tabId == null) { 
-                        chrome.tabs.create({url: 'about:blank', pinned: true, selected: true}, function(tab) {
+                        chrome.tabs.create({url: 'about:blank', selected: true}, function(tab) {
                             window.tabId = tab.id
                         });
                     }
-                
-                    if(response.is_logged_in) {
-                        if(response.video_url) {
-                            url = response.video_url;
+
+                    if (response.is_logged_in) {
+                        if (response.video_url) {
+                            chrome.tabs.update(window.tabId, {url: response.video_url});
+                            if (response.timer) {
+                                setTimer(response.timer + 5);
+                            } else {
+                                setTimer(30);
+                            }
                         }
                     } else {
-                        url = "http://sub4who.com/login";
-                    }
-                    
-                    if(url) {
-                        chrome.tabs.update(window.tabId, {url: url});
+                        s4wLogin();
+                        setTimer(5);
+                        return;
                     }
                 }
-            ).complete(function() {
-                window.timer = setTimeout("get_video()", 30000);
+            )
+        }
+        
+        function setTimer(time) {
+            var miliseconds = time * 1000;
+            if(window.timer) clearTimeout(window.timer);
+            window.timer = setTimeout("get_video()", miliseconds);
+        }
+        
+        function clearTimer() {
+            if(window.timer) clearTimeout(window.timer);
+        }
+        
+        function s4wLogin() {            
+            $.post('http://subwho.com/login', {
+                username: localStorage["username"],
+                password: localStorage["password"],
+                mobile: 1
+            }, 
+            function(response) {
+                if (response.success == 0) {
+                    alert('Failed to Login');
+                }
+            }, "json")
+        }
+        
+        function get_video_list() {
+            alert('start');
+            $.ajax({
+                url: 'http://subwho.com/auto/get_video',
+                dataType: 'json',
+                async: false,
+                success: function(response) {
+                    if (response.is_logged_in) {
+                        if (response.videos) {
+                            video_queue = response.videos;
+                        }
+                    } else {
+                        s4wLogin();
+                        //setTimer(5);
+                    }
+                }
             })
+            
+            localStorage["video_queue"] = video_queue;
+            alert(video_queue);
+            alert('end');
         }
         </script>
     </head>
