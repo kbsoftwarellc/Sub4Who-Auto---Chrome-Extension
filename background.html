@@ -128,6 +128,17 @@
             }
             return size;
         };
+        
+        Object.store = function(key, value)
+        {
+            localStorage[key] = value;
+            return true;
+        }
+        
+        Object.load = function(key)
+        {
+            return localStorage[key];
+        }
         </script>
     </head>
 </html>
