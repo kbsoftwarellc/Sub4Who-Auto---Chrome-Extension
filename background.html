@@ -5,35 +5,8 @@
         var video_queue = localStorage["video_queue"];
         
         chrome.browserAction.onClicked.addListener(function(tab) {
-            get_video_list();
-            return;
-            $.getJSON('http://subwho.com/auto/get_video?start=1', function(data) {
-                if(data.is_logged_in) {
-                    if(window.timer) clearTimeout(window.timer);
-                   
-                    if(window.tabId == null) { 
-                        chrome.tabs.create({url: "about:blank", selected: true}, function(tab) {
-                            window.tabId = tab.id
-                            setTimer(1);
-                        });
-                    } else {
-                        chrome.tabs.update(window.tabId, {selected: true});
-                        setTimer(1);
-                    } 
-                } else {
-                    s4wLogin();
-                    
-                    if(window.tabId == null) { 
-                        chrome.tabs.create({url: "about:blank", selected: true}, function(tab) {
-                            window.tabId = tab.id
-                            setTimer(5);
-                        });
-                    } else {
-                        chrome.tabs.update(window.tabId, {selected: true});
-                        setTimer(5);
-                    } 
-                }
-            })
+            visit_url("about: blank");
+            setTimer(1);
         });
         
         chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
@@ -43,84 +16,119 @@
             }
         });
         
-        function get_video() {
+        function watch_video() 
+        {
             //No point to working if no window.
             if (window.tabId == null) return;
-            
-            $.getJSON('http://subwho.com/auto/get_video',
-                {
-                 
-                }, 
-                function(response) {
-                    if(window.tabId == null) { 
-                        chrome.tabs.create({url: 'about:blank', selected: true}, function(tab) {
-                            window.tabId = tab.id
-                        });
-                    }
 
-                    if (response.is_logged_in) {
-                        if (response.video_url) {
-                            chrome.tabs.update(window.tabId, {url: response.video_url});
-                            if (response.timer) {
-                                setTimer(response.timer + 5);
-                            } else {
-                                setTimer(30);
-                            }
-                        }
-                    } else {
-                        s4wLogin();
-                        setTimer(5);
-                        return;
-                    }
-                }
-            )
+            var myVideo = get_local_video();
+            
+            if (Object.size(myVideo) > 0)
+            {
+                visit_url(myVideo.video_url);
+                setTimer(myVideo.timer);
+            }
+            else 
+            {
+                get_video_list();
+                setTimer(30);
+            }
         }
         
-        function setTimer(time) {
+        function setTimer(time) 
+        {
             var miliseconds = time * 1000;
             if(window.timer) clearTimeout(window.timer);
-            window.timer = setTimeout("get_video()", miliseconds);
+            window.timer = setTimeout("watch_video()", miliseconds);
         }
         
-        function clearTimer() {
+        function clearTimer() 
+        {
             if(window.timer) clearTimeout(window.timer);
         }
         
-        function s4wLogin() {            
-            $.post('http://subwho.com/login', {
-                username: localStorage["username"],
-                password: localStorage["password"],
-                mobile: 1
-            }, 
-            function(response) {
-                if (response.success == 0) {
-                    alert('Failed to Login');
-                }
-            }, "json")
-        }
-        
-        function get_video_list() {
-            alert('start');
+        function s4wLogin() 
+        {
             $.ajax({
-                url: 'http://subwho.com/auto/get_video',
-                dataType: 'json',
+                url: 'http://subwho.com/login',
+                type: "POST",
+                dataType: "JSON",
+                data: {
+                    mobile: 1,
+                    username: localStorage["username"],
+                    password: localStorage["password"]
+                },
                 async: false,
                 success: function(response) {
-                    if (response.is_logged_in) {
-                        if (response.videos) {
-                            video_queue = response.videos;
-                        }
-                    } else {
-                        s4wLogin();
-                        //setTimer(5);
+                    if (response.success == 0) {
+                        alert('Failed to Login');
                     }
                 }
             })
-            
-            localStorage["video_queue"] = video_queue;
-            alert(video_queue);
-            alert('end');
         }
+        
+        function get_video_list() 
+        {
+            var video_queue = new Array();
+            
+            $.ajax({
+                url: 'http://subwho.com/auto/get_videos',
+                dataType: 'json',
+                async: false,
+                success: function(response) {
+                    if (response.is_logged_in) 
+                    {
+                        if (response.videos) video_queue = response.videos;
+                    } 
+                    else 
+                    {
+                        s4wLogin();
+                    }
+                }
+            })
+            localStorage["video_queue"] = JSON.stringify(video_queue);
+        }
+        
+        function get_local_video() 
+        {
+            var queue = JSON.parse(localStorage["video_queue"]);
+            
+            if (queue.length > 0) 
+            {
+                video = queue[0];
+                queue.splice(0,1);
+                localStorage["video_queue"] = JSON.stringify(queue);
+                
+                return video;
+            } 
+            else
+            {
+                return false;
+            }
+        }
+        
+        function visit_url(url)
+        {
+            if(window.tabId == null) 
+            { 
+                chrome.tabs.create({url: url, selected: true}, function(tab) {
+                    window.tabId = tab.id
+                });
+            } 
+            else 
+            {
+                chrome.tabs.update(window.tabId, {url: url, selected: true});
+            }
+        }
+        
+        Object.size = function(obj) 
+        {
+            var size = 0, key;
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) size++;
+            }
+            return size;
+        };
         </script>
     </head>
 </html>
