@@ -5,12 +5,31 @@
         window.last_url = null;
                 
         chrome.browserAction.onClicked.addListener(function(tab) {
+            if (window.tabId > 0) return;
+            
+            var username = Object.load("username");
+            var password = Object.load("password"); 
+            var user_key = Object.load("user_key");
+            
+            if (username == undefined || username.length == 0 || password == undefined || password.length == 0)
+            {
+                alert('Please configure your login before using the plugin');
+                return;
+            }
+            
+            if (user_key == undefined || user_key.length == 0)
+            {
+                user_key = get_user_key();
+                if (user_key.length > 0) Object.save("user_key", user_key);
+            }
+            
             visit_url("about: blank");
             setTimer(1);
         });
         
         chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-            if (tabId == window.tabId) {
+            if (tabId == window.tabId) 
+            {
                 window.tabId = null;
                 if(window.timer) clearTimeout(window.timer);
             }
@@ -47,26 +66,6 @@
             if(window.timer) clearTimeout(window.timer);
         }
         
-        function s4wLogin() 
-        {
-            $.ajax({
-                url: 'http://subwho.com/login',
-                type: "POST",
-                dataType: "JSON",
-                data: {
-                    mobile: 1,
-                    username: localStorage["username"],
-                    password: localStorage["password"]
-                },
-                async: false,
-                success: function(response) {
-                    if (response.success == 0) {
-                        alert('Failed to Login');
-                    }
-                }
-            })
-        }
-        
         function get_video_list() 
         {
             var video_queue = new Array();
@@ -74,18 +73,16 @@
             $.ajax({
                 url: 'http://subwho.com/auto/get_videos',
                 dataType: 'json',
+                data: {user_key: Object.load("user_key")},
                 async: false,
                 success: function(response) {
                     if (response.is_logged_in) 
                     {
                         if (response.videos) video_queue = response.videos;
-                    } 
-                    else 
-                    {
-                        s4wLogin();
                     }
                 }
             })
+            
             localStorage["video_queue"] = JSON.stringify(video_queue);
         }
         
@@ -125,8 +122,6 @@
                     window.last_url = url;
                 });
             }
-            
-            
         }
         
         function return_video_info() 
@@ -140,13 +135,29 @@
                     if (response.is_logged_in) 
                     {
                         if (response.videos) video_queue = response.videos;
-                    } 
-                    else 
-                    {
-                        s4wLogin();
                     }
                 }
             })
+        }
+        
+        function get_user_key()
+        {
+            var user_key = '';
+            
+            $.ajax({
+                url: 'http://subwho.com/remote/user_data',
+                dataType: 'json',
+                data: {
+                    username: Object.load("username"),
+                    password: Object.load("password")
+                },
+                async: false,
+                success: function(response) {
+                    if (response.user_key) user_key = response.user_key;
+                }
+            })
+            
+            return user_key;
         }
         
         Object.size = function(obj) 
