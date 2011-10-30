@@ -1,6 +1,6 @@
 {
     "name": "Sub4Who Auto-Earn",
-    "version": "0.3",
+    "version": "0.4",
     "update_url": "http://sub4who.com/downloads/chrome/update.xml",
     "options_page": "options.html",
     "icons": { "16": "icons/s4w-16.jpg",

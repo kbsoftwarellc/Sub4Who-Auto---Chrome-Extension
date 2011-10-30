@@ -50,7 +50,7 @@
             if (window.tabId == null) return;
             
             chrome.tabs.get(window.tabId, function(tabInfo) {
-                if (tabInfo.url == window.last_url && tabInfo.url != 'about: blank')
+                if (tabInfo.url == window.last_url)
                 { 
                     return_video_info();
                 }
@@ -62,10 +62,9 @@
                 }
                 else 
                 {
-                    visit_url('about: blank');
+                    visit_url('ad.html');
                     window.last_url = null;
                     setTimer(30);
-                    alert('no video');
                 }
             });
         }
