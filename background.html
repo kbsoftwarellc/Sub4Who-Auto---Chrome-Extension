@@ -15,6 +15,7 @@
             if (username == undefined || username.length == 0 || password == undefined || password.length == 0)
             {
                 alert('Please configure your login before using the plugin');
+                visit_url('options.html');
                 return;
             }
             
@@ -25,13 +26,14 @@
                 if (user_key.length == 0)
                 {
                     alert('Unable to get a user key, your login info is probably wrong');
+                    visit_url('options.html');
                     return;
                 }
 
                 Object.store("user_key", user_key);
             }
             
-            visit_url("about: blank");
+            visit_url("about:blank");
             setTimer(1);
         });
         
